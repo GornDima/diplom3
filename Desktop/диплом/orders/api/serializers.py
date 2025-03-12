@@ -1,37 +1,22 @@
 from rest_framework import serializers
-from .models import *
+
+from models import User, Category, Shop, ProductInfo, Product, ProductParameter, OrderItem, Order, Contact
 
 class ContactSerializer(serializers.ModelSerializer):
     class Meta:
         model = Contact
-        fields = "__all__"
+        fields = ('id', 'city', 'street', 'house', 'structure', 'building', 'apartment', 'user', 'phone')
         read_only_fields = ('id',)
         extra_kwargs = {
             'user': {'write_only': True}
         }
 
-
-class UserSerializer(serializers.ModelSerializer):
-    contacts = ContactSerializer(read_only=True, many=True)
+class ProductSerializer(serializers.ModelSerializer):
+    category = serializers.StringRelatedField()
 
     class Meta:
-        model = User
-        fields = "__all__"
-        read_only_fields = ('id',)
-
-
-class ShopSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Shop
-        fields = "__all__"
-        read_only_fields = ('id',)
-
-
-class CategorySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Category
-        fields = "__all__"
-        read_only_fields = ('id',)
+        model = Product
+        fields = ('name', 'category',)
 
 
 class ProductParameterSerializer(serializers.ModelSerializer):
@@ -39,55 +24,40 @@ class ProductParameterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ProductParameter
-        fields = "__all__"
+        fields = ('parameter', 'value',)
 
 
-class ProductSerializer(serializers.ModelSerializer):
-    shop = serializers.StringRelatedField()
-    category = serializers.StringRelatedField()
+class ProductInfoSerializer(serializers.ModelSerializer):
+    product = ProductSerializer(read_only=True)
     product_parameters = ProductParameterSerializer(read_only=True, many=True)
 
     class Meta:
-        model = Product
-        fields = "__all__"
+        model = ProductInfo
+        fields = ('id', 'model', 'product', 'shop', 'quantity', 'price', 'price_rrc', 'product_parameters',)
         read_only_fields = ('id',)
 
 
-class OrderItemAddSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = OrderItem
-        fields = "__all__"
-
-
 class OrderItemSerializer(serializers.ModelSerializer):
-    shop = serializers.StringRelatedField()
-    category = serializers.StringRelatedField()
-
     class Meta:
         model = OrderItem
-        fields = "__all__"
+        fields = ('id', 'product_info', 'quantity', 'order',)
         read_only_fields = ('id',)
         extra_kwargs = {
             'order': {'write_only': True}
         }
 
 
-class OrderModifySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Order
-        fields = "__all__"
-        read_only_fields = ('id',)
+class OrderItemCreateSerializer(OrderItemSerializer):
+    product_info = ProductInfoSerializer(read_only=True)
 
 
 class OrderSerializer(serializers.ModelSerializer):
-    ordered_items = OrderItemSerializer(read_only=True, many=True)
+    ordered_items = OrderItemCreateSerializer(read_only=True, many=True)
 
     total_sum = serializers.IntegerField()
-    total_quantity = serializers.IntegerField()
     contact = ContactSerializer(read_only=True)
 
     class Meta:
         model = Order
-        fields = "__all__"
+        fields = ('id', 'ordered_items', 'status', 'dt', 'total_sum', 'contact',)
         read_only_fields = ('id',)
-        
